@@ -90,7 +90,8 @@ print(head(patient_enrollment))
 
 
 qplot(data = patient_enrollment  ,
-      x = as.Date(Enrollment_Date) , fill = Form_type)
+      x = as.Date(Enrollment_Date) , fill = Form_type) +
+  facet_grid(Facility_Name~.)
 
 patient_enrollment$time_to_entry <- as.numeric(difftime(as.Date(patient_enrollment$form_creation_time) ,
                                                            as.Date(patient_enrollment$Enrollment_Date)) ,
@@ -99,9 +100,14 @@ patient_enrollment$time_to_entry <- as.numeric(difftime(as.Date(patient_enrollme
 
 
 
-qplot(patient_enrollment$time_to_entry)
+qplot(data = patient_enrollment , y = as.Date(form_creation_time) , x = as.Date(Enrollment_Date))+
+  facet_grid(Facility_Name~.)
 
 print(summary(patient_enrollment$time_to_entry))
 
 ```
 
+
+There is a curious spike in enrollment happening at the time of data catch up. Probably error, to be accounted for.
+
+The data entry timing looks ok. 
