@@ -1,0 +1,107 @@
+---
+title: "First Exploration"
+author: "Grégoire Lurton"
+date: "June, 2016"
+output: html_document
+---
+
+# Files Reading and aggregation
+
+Simple script to read and aggregate all files.
+
+```{r load_data}
+data_path <- 'c://Users/grlurton/Google Drive/KenyaEMR/data/'
+
+list_facilities <- list.files(data_path)
+
+adult_cqi <- data.frame()
+paed_cqi <- data.frame()
+patient_enrollment <- data.frame()
+patient_visits <- data.frame()
+moh_731_a <- data.frame()
+moh_731_b <- data.frame()
+
+for (fac in list_facilities){
+    adult_cqi <- rbind(adult_cqi , read.csv(paste0(data_path , fac,  '/Adult_CQI_final.csv')))
+    paed_cqi <- rbind(paed_cqi , read.csv(paste0(data_path , fac,  '/Paeds_CQI_final.csv')))
+    patient_enrollment <- rbind(patient_enrollment , 
+                                read.csv(paste0(data_path , fac,  
+                                                '/kenyaEMR_Patient_initial_enrollment.csv')))
+    patient_visits <- rbind(patient_visits , 
+                            read.csv(paste0(data_path , fac,  
+                                            '/KenyaEMR_Visit_Encounters.csv')))
+    moh_731_a <- rbind(moh_731_a , 
+                       read.csv(paste0(data_path , fac,
+                                       '/MOH731_Care_and_Treatment_3.1_3.8_indicators.csv')))
+    moh_731_b <- rbind(moh_731_b , 
+                       read.csv(paste0(data_path , fac,
+                                       '/MOH731_PMTCT_OTHER_CARE_AND_TREATMENT_AND_MOH711_TB_INDICATORS.csv')))
+}
+```
+
+Data reading and aggregation works fine. Only problem encountered was bad standardization of files names. Two file names had to be updated to match others.
+
+**Please make extra sure the names of csv files are properly standardized so aggregation can happen without manual modification. This may be in the script or in the training of people making hte data extraction.**
+
+
+
+## MOH Reports
+
+
+## CQI Data 
+
+### Adult 
+
+Quick look at adult cqi data
+
+```{r adult_cqi}
+library(reshape2)
+melted_dat <- melt(adult_cqi , id = c("Facility_Name" , "Period" , 'MFL_Code' ,  'Indicator' , 'Name'))
+library(ggplot2)
+
+qplot(data = melted_dat , x = as.Date(paste0(Period , '-1') , "%Y-%b-%d") , 
+      y  = value , col = variable , geom = 'line') +
+  facet_grid(Name ~ Facility_Name)
+
+```
+
+There doesn't seem to be any major problem with extraction of CQI adult data. Some outliers do not come from aggregation but probably come from actual data.
+
+### Paediatrics
+
+```{r paed_cqi}
+library(reshape2)
+melted_dat <- melt(paed_cqi , id = c("Facility_Name" , "Period" , 'MFL_Code' ,  'Indicator' , 'Name'))
+library(ggplot2)
+
+qplot(data = melted_dat , x = as.Date(paste0(Period , '-1') , "%Y-%b-%d") , 
+      y  = value , col = variable , geom = 'line') +
+  facet_grid(Name ~ Facility_Name)
+```
+
+There doesn't seem to be any major problem with extraction of CQI paed data. Some outliers do not come from aggregation but probably come from actual data.
+
+
+
+## Data Entry Metadata
+
+```{r enrollment_metadata}
+print(head(patient_enrollment))
+
+
+qplot(data = patient_enrollment  ,
+      x = as.Date(Enrollment_Date) , fill = Form_type)
+
+patient_enrollment$time_to_entry <- as.numeric(difftime(as.Date(patient_enrollment$form_creation_time) ,
+                                                           as.Date(patient_enrollment$Enrollment_Date)) ,
+                                               units = 'days')
+
+
+
+
+qplot(patient_enrollment$time_to_entry)
+
+print(summary(patient_enrollment$time_to_entry))
+
+```
+
